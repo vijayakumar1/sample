@@ -1,0 +1,46 @@
+---
+- hosts: ds_53
+  user: acsapp
+  become_method: yes
+  vars:
+  - linkLocation: http://192.168.105.99/3DS/Release-builds/sas-2018-08-14-15-12.7.0.zip
+  tasks:
+  - name: get the zip file from remote location and unarchive
+    unarchive: 
+      src: "{{ linkLocation }}"
+      dest: "{{ item }}"
+      remote_src: yes
+    with_items:
+    - /home/acsapp/deploy/tbd
+    - /home/acsapp/deployed_location1/bkf 
+    -----------------------------------------------------------------------------
+    ---
+- hosts: ds_53
+  tasks:
+  - name: synchronize something from central mirror to localhost
+    synchronize:
+      src: "/home/acsapp/deploy/tbd/threedsserver-api-1.0-SNAPSHOT-capsule.jar"
+      dest: "/home/acsapp/ansi@scripts/get_files/"
+      delete: yes
+      recursive: yes
+      mode: pull
+    delegate_to: localhost
+    --------------------------------------------------------------------------------------
+    ---
+- hosts: ds_53
+  user: acsapp
+  become_method: yes
+  vars:
+  - zipName: sas-2018-08-13-12-12.7.1.zip 
+  - jarRemotePath: /home/acsapp/deployed_location1/
+  - jarlinkLocation: http://192.168.105.99/3DS/Release-builds/sas-2018-08-13-19-12.7.0.zip
+  tasks:
+  - name: Unarchive a file that needs to be downloaded (added in 2.0)
+    unarchive:
+      src: "{{jarlinkLocation}}"
+      dest: /home/acsapp/deploy/
+      remote_src: yes  
+  - name: copy the jar into remote location
+    copy: src=/home/acsapp/deploy/ dest={{zipRemotePath}}
+  - name: Delete remote jar file
+    file: path=/home/acsapp/deploy/{{zipName}} state=absent
