@@ -1,0 +1,21 @@
+---
+- hosts: ds_53
+  user: acsapp
+  become: yes
+  tasks:
+  - name:
+    copy:
+      src: /appserver/acs2-api/*capsle.jar
+      dest: /backup/acs2-api/bkp/
+  - name: stop the vertex
+    shell: acs2api="/appserver/acs2-api/"; acs2apipid=`ps -ef | grep acs2-api-1.0-SNAPSHOT-capsule.jar | awk '{print $2}' ` ;kill -9 $acs2apipid ;sleep 3;
+    register: pids_res
+    ignore_errors: True
+  - name: deploy the jar into vertex app server
+    shell: cd $acs2api ;cp -r acs2-api-1.0-SNAPSHOT-capsule.jar "$acs2apibkp"/acs2-api-1.0-SNAPSHOT-capsule.jar_`date +%d-%m-%y`; cd $acs2apitbd;chmod 777 -R * ;cp -vr *.jar "$acs2api" ;cd $acs2api ;chmod 777 -R *;
+    register: deploy_out
+    when: pid_res is success
+
+  - name: starting the vertex app server
+    shell: cd "$acs2api"; chmod 777 *; sleep 2; nohup sh run-java-app.sh acs2-api-1.0-SNAPSHOT-capsule.jar start & ; sleep 5 ; cd $acs2api; sh run-java-app.sh acs2-api-1.0-SNAPSHOT-capsule.jar status cd "$acs2apitbd"; rm -r *.jar
+    when: deploy_out is success
