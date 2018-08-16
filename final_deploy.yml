@@ -1,0 +1,25 @@
+---
+- hosts: ds_53
+  user: acsapp
+  become: yes
+  vars:
+  - location: /appserver/acsapi
+  tasks:
+  - name: stop the vertex
+    shell: acs2api="/appserver/acs2-api/"; acs2apipid=`ps -ef | grep acs2-api-1.0-SNAPSHOT-capsule.jar | awk '{print $2}' ` ;kill -9 $acs2apipid ;sleep 3;
+  - name: taking the artifact backup
+    copy: src={{item}} dest=/appserver/acsapi/
+    with_fileglob:
+    - /appserver/acsapi/tbd/*capsule.jar
+  - name: change the file permissions
+    shell: cd /appserver/acsapi/tpd/ ; chmod 777 -R *
+  - name: deploy jar file
+    shell: cp -rf /appserver/acsapi/*.jar /appserver/acsapi/ ; chmod 777 -R *
+  - name: change the file permision
+    shell: cd /appserver/acsapi ;chmod 777 * ; sleep2
+  - name:
+    shell: nohug sh run-java-app.sh *.jar start & ;sleep 5
+  - name:
+    shell: cd /appserver/acsapi/ ; sh run-java-app.sh *.jar statuss
+  - name: clearing the tbd dir
+    shell: cd /appserver/acsapi/tbd ; rm -rf *.jar
