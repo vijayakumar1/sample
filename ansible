@@ -1,0 +1,94 @@
+job('vertx-microservices-workshop-job') {
+    jdk('JDK8')
+    scm {
+        git('git://github.com/ricardohmon/vertx-microservices-workshop.git')
+    }
+    triggers {
+        scm('*/15 * * * *')
+    }
+    steps {
+
+      def mvnInst = 'M3.3.9'  
+      maven {  
+        goals('package')  
+        mavenInstallation(mvnInst)  
+      }  
+      ansiblePlaybook('/ansible/playbook.yml') {  
+        inventoryPath('/ansible/hosts')  
+        ansibleName('Ansible2.0')  
+        credentialsId('vagrant-key')  
+        colorizedOutput(true)  
+      }  
+
+    }  
+}
+------------------------------------------------------------------------------------------------------------------
+1) Special task for the service with a db
+- hosts: audit-service
+  remote_user: vagrant
+  become: yes
+  roles:
+    - db-setup
+
+  # 2) Common tasks for all hosts
+- hosts: quote-generator:portfolio-service:compulsive-traders:audit-service:trader-dashboard
+  remote_user: vagrant
+  become: yes
+  serial: 1
+  environment:
+    JAVA_HOME: /usr/lib/jvm/jre-1.8.0-openjdk/
+
+  pre_tasks:
+  - name: Check if the app jar exists in the target already
+    stat: path=/usr/share/vertx_app/app-fatjar.jar
+    register: st
+  - name: List running Vert.x applications
+    command: java -jar /usr/share/vertx_app/app-fatjar.jar list
+    register: running_app_list
+    when: st.stat.exists == True
+  - name: Stop app if it is already running (avoid multiple running instances)
+    command: java -jar /usr/share/vertx_app/app-fatjar.jar stop {{ item | regex_replace('^(?P<V_id>.[8]-.[4]-.[4].[4].[12])\t.*', '\\g<V_id>') }}
+    with_items: "{{ running_app_list.stdout_lines|default([]) }}"
+    when: st.stat.exists == True and (item | regex_replace('.*\t(.*)$', '\\1') | match('.*/app-fatjar.jar$'))
+
+  # Main role
+  roles:
+    - { role: vertx-app-deployment, jenkins_job_workspace: "" }
+
+  post_tasks:
+  - name: List again running Vert.x applications
+    command: java -jar /usr/share/vertx_app/app-fatjar.jar list
+    --------------------------------------------------------------------------------------------------
+    
+    - name: Install Java 1.8 and some basic dependencies
+  yum: name={{ item }} state=present
+  with_items:
+   - java-1.8.0-openjdk
+- name: Ensure app dir exists
+  file: path=/usr/share/vertx_app/ recurse=yes state=directory mode=0744
+- name: Copy the Vert.x application jar package
+  copy: src={{ app_jar }} dest=/usr/share/vertx_app/app-fatjar.jar mode=0755
+- name: Ensure config dir exists
+  file: path=/etc/vertx_app/ recurse=yes state=directory mode=0744
+- name: Copy the application config file if needed
+  copy: src={{ app_config }} dest=/etc/vertx_app/config.json mode=0755
+  when: app_config is defined
+  -----------------------------------------------------------------------------------------------------
+  
+  - name: Run Vert.x application as a service, ignore the SIGHUP signal
+  shell: nohup java {{ vertx_opts }} -jar /usr/share/vertx_app/app-fatjar.jar start {{ launch_params }}
+  register: svc_run_out
+- name: Print run output
+  debug: var=svc_run_out.stdout_lines
+  
+  
+  ---------------------------------------------------------------------------------------------------------
+  
+  
+  git clone https://github.com/ricardohmon/vertx-ansible.git
+cd demo
+vagrant up
+  
+    
+    
+    
