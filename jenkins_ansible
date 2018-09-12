@@ -1,0 +1,3 @@
+ stage('Ansble deploy'){
+        sh "cd /appserver/jenkins-workspace/ansible && ansible-playbook ansi_deploy1.yml -e'pjt=acs2-ui hosts=${params.opt}'"
+    }
