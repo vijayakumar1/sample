@@ -1,0 +1,101 @@
+ELK INSTALLATION GUIDE FOR CENTRALIZED LOGS FOR MULTIPLE SERVERS ON UBUNTU WITH ELK 6.2 VERSION
+
+	This is centralize logs using elasticsearch, kibana and filebeat. Here in this elasticsearch and kibana will be installed on one of the servers and filebeat is needs to be installed each and every nodes or servers.
+
+Installation of Elasticsearch.
+
+URL: https://www.elastic.co/guide/en/elasticsearch/reference/6.2/deb.html
+
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.4.deb
+
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.4.deb.sha512
+
+shasum -a 512 elasticsearch-6.2.4.deb.sha512
+
+sudo dpkg -i elasticsearch-6.2.4.deb
+
+Configuration of Elasticsearch:
+
+Open elasticsearch.yml file and edit network.host and uncomment.
+
+sudo vi /etc/elasticsearch/elasticsearch.yml
+
+network.host: localhost or $server_ip
+
+
+Set JAVA_HOME:
+
+Open elasticsearch file and edit JAVA_HOME and uncomment.
+
+sudo vi /etc/default/elasticsearch
+
+Start Elasticsearch:
+
+sudo /usr/share/elasticsearch/bin/elasticsearch &
+
+Confirm Elasticsearch is running:
+
+netstat -pltn should display $server_host:9200.
+
+
+
+
+Install Kibana:
+
+wget https://artifacts.elastic.co/downloads/kibana/kibana-6.2.4-amd64.deb
+
+shasum -a 512 kibana-6.2.4-amd64.deb 
+
+sudo dpkg -i kibana-6.2.4-amd64.deb
+
+Configure Kibana: 
+
+Edit network.host anerver_ipd elasticsearch.url and uncomment.
+
+sudo vi /etc/kibana/kibana.yml 
+
+network.host: $server_ip
+
+elasticsearch.url: localhost or $server_ip
+
+
+Start Kibana service:
+sudo /usr/share/kibana/bin/kibana &
+Installation of Filebeat:
+wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-6.2.4-amd64.deb.sha512
+sudo shasum -a filebeat-6.2.4-amd64.deb.sha512
+wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-6.2.4-amd64.deb
+sudo dpkg -i filebeat-6.2.4-amd64.deb
+Configuration of Filebeat:
+Edit filebeat.yml in directory /etc/filebaeta.
+Under  filebeat.prospectors edit,
+enabled: true
+paths:
+   - /appserver/3ds-server-api/logs/threedsserver-api-1.0-SNAPSHOT-capsule.log
+  - /appserver/3ds-server-ui/logs/3ds-ui-1.0-SNAPSHOT-capsule.log      (This is belongs logs within server on which filebeat is going to be installed.)
+
+setup.kibana:
+  host: “kibana_host:port”
+erver_ip
+
+output.elasticsearch:
+  host: “elasticsearch_host:port”
+
+
+Setup for centralized logs:
+a
+Configuration of elasticsearch:
+
+Edit section below,
+
+Under Cluster:
+cluster.name: uncomment it and give specific name.
+192.168.108.96
+Under Node:
+node.name: Uncomment and give secific name
+
+Under Discovery:
+discovery.zen.ping.unicast.hosts: ["ip of first node, ip of second node"]
+discovery.zen.minimum_master_nodes: (mention number of nodes to be setup)
+
+erver_ip
