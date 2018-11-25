@@ -1,0 +1,6 @@
+
+
+- include: centos-xxx.yml
+  when: ansible_os_family == 'RedHat' or ansible_distribution == 'Centos'
+- include: debian-xxx.yml
+  when: ansible_distribution == 'Debian'
