@@ -88,7 +88,8 @@ job('vertx-microservices-workshop-job') {
   git clone https://github.com/ricardohmon/vertx-ansible.git
 cd demo
 vagrant up
-  
+  docker -----------------------------------------------------------------------------adc
     
-    
+    sudo chmod a+rwx /var/run/docker.sock # You can provide just execute permission
+sudo chmod a+rwx /var/run/docker.pid
     
